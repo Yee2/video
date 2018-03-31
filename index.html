@@ -2,7 +2,6 @@
 <html>
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-    <script src="https://cdn.bootcss.com/jquery/3.2.1/jquery.min.js"></script>
     <link rel="stylesheet" href="public/video.css">
     <link rel="stylesheet" href="player/progress.css">
     <link rel="stylesheet" href="public/style.css">
@@ -28,9 +27,11 @@
         <div class="play">&#xea1c;</div>
         <div class="progress-bar"></div>
         <div class="full">&#xe98b;</div>
-        <div class="sound">&#xea26;</div>
+        <div class="sound-bar">
+            <div class="gap"><div class="volume-bar"></div></div>
+            <div class="sound">&#xea26;</div>
+        </div>
         <div class="time">0:0:0/0:0:0</div>
-        <div class="volume-bar"></div>
     </div>
 </div>
 <!-- 构造播放器结束 -->
@@ -77,7 +78,10 @@
         if (ele === null) {
             return false;
         }
-
+        ele.style.overflow = "hidden";
+        function not(b) {
+            return !b;
+        }
         function timeFormat(time) {
             time = Math.floor(time)
             var s = time % 60,
@@ -97,14 +101,35 @@
             }
             return h + ":" + i + ":" + s;
         }
+        let mouseover = false;//鼠标是否在播放器上面
         const video = ele.Q('video'),
             panel = ele.Q('.panel'),
             film = ele.Q('.film'),
             sound = panel.Q('.sound'),
             menu = ele.Q('.menu');
+        panel.show = (function () {
+            this.style.bottom = "0";
+        }).bind(panel);
+        panel.hide = (function () {
+            this.style.bottom = "-30px";
+        }).bind(panel);
+        panel.autoHidden = (function () {
+            if(panel.timer){
+                clearTimeout(panel.timer);
+            }
+            panel.timer = setTimeout(function () {
+                if(not(video.paused)){
+                    panel.hide();
+                    clearTimeout(panel.timer);
+                }
+            },2000);
+        }).bind(panel);
+        panel.timer = null;
         video.On("pause",()=>{
             panel.Q(".play").innerHTML = "&#xea1c;";
+            panel.show();
         }).On("playing",()=>{
+            panel.autoHidden();
             panel.Q(".play").innerHTML ="&#xea1d;";
         }).On("volumechange",()=> {
             if(video.volume > 0.8){
@@ -163,8 +188,14 @@
             video.trigger();
         };
         ele.On("mouseover",(e)=>{
+            mouseover = true;
             document.addEventListener("keypress", doc_key_press );
+        }).On("mousemove",(e)=>{
+            panel.show();
+            panel.autoHidden();
         }).On("mouseout",()=>{
+            mouseover = false;
+            panel.autoHidden();
             document.removeEventListener("keypress", doc_key_press );
         });
 
@@ -172,7 +203,6 @@
         volume.direction = "v";
         volume.init();
         volume.onchange = (v)=>{
-            console.log(v);
             video.volume = v;
         };
 
@@ -203,7 +233,6 @@
             } else {
                 this.pause();
             }
-            panel.x = 2;
         }).bind(video);
         menu.addEventListener('click', function (e) {
             e.preventDefault();
@@ -234,68 +263,14 @@
                 return false;
             }, false);
         })();
-        (function () {
-            var x = 1, t;
-            /*
-            *   三种状态:
-            *   1 默认1s后隐藏
-            *   2 马上显示，然后1s后隐藏
-            *   0 一直显示
-            *
-            */
-            Object.defineProperty(panel, 'x', {
-                set: function (val) {
-                    var fullscreenElement = document.fullscreenElement ||
-                        document.mozFullScreenElement ||
-                        document.webkitFullscreenElement;
-                    if (t) {
-                        clearTimeout(t);
-                        t = null;
-                    }
-                    val = parseInt(val);
-                    if (video.paused || panel.lock) {
-                        panel.style.height = "30px";
-                        ele.querySelector('.film').style.cursor = "auto";
-                        return;
-                    }
-                    if (val === 1) {
-                        t = setTimeout(function () {
-                            panel.style.height = "0";
-                        }, 1000);
-                    } else if (val === 2) {
-                        panel.style.height = "30px";
-                        ele.querySelector('.film').style.cursor = "auto";
-                        t = setTimeout(function () {
-                            panel.style.height = "0";
-                            ele.querySelector('.film').style.cursor = "none";
-                        }, 1000);
-                    } else {
-                        panel.style.height = "30px";
-                    }
-                }
-            })
-        })();
-        panel.On('mouseover', function () {
-            panel.lock = true;
-        }).On('mouseout', function () {
-            panel.lock = false;
-        });
-
-        ele.On('mouseover', function () {
-            panel.x = 2;
-        }).On('mouseout', function () {
-            panel.x = 1;
-        }).On('mousemove', function () {
-            panel.x = 2;
-        });
         panel.addEventListener('selectstart', function (ev) {
             ev.preventDefault();
             return false;
         }, false);
-        panel.querySelector(".play").addEventListener("click", function () {
+        panel.Q(".play").On("click", function () {
             video.trigger();
         });
-        panel.querySelector(".full").addEventListener("click", function () {
+        panel.Q(".full").On("click", function () {
             var fullscreenElement = document.fullscreenElement ||
                 document.mozFullScreenElement ||
                 document.webkitFullscreenElement;
@@ -325,10 +300,7 @@
             }
             console.log("浏览器不支持");
         });
-        panel.querySelector(".sound").addEventListener("click", function () {
-            if (volume.style.display === null) {
-                volume.style.display = "block";
-            }
+        panel.Q(".sound").On("click", function () {
         });
 
     })(document.querySelector("#videoPlay"));

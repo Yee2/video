@@ -47,18 +47,24 @@
         }
     }
     .panel{
+        box-sizing: border-box;
+        *{
+            box-sizing: border-box;
+        }
         position: absolute;
         top:auto;
         width: 100%;
         bottom:0;
         height: @panelHeight;
+        line-height: @panelHeight;
+        font-size: 20px;
 
         display: flex;
         align-items: center;
         justify-content: space-between;
         background: linear-gradient(to bottom, rgba(0,0,0,0.0),rgba(0,0,0,0.2) 60%, rgba(0,0,0,0.5));
-        color:#EEE;
-        transition:height 0.5s;
+        color: #aaaaaa;
+        transition:bottom 0.5s;
 
         >div{
             height: 30px;
@@ -77,17 +83,35 @@
             padding: 0 10px;
             font-size: 12px;
         }
-        .volume-bar{
-            border-radius: 3px;
-            position: absolute;
-            z-index: 2;
-            right: 90px;
-            bottom: 40px;
-            margin: 0;
-            padding: 0;
-            background: rgba(0,0,0,0.2);
-            height: 150px;
-            width: 25px;
+        .sound-bar{
+            width: 41px;
+            height: @panelHeight;
+            overflow: hidden;
+            transition:height 0.2s;
+            align-self:flex-end;
+            display: flex;
+            flex-direction: column;
+            justify-content:space-between;
+            align-items:center;
+            &:hover{
+                height: 200px;
+            }
+            >.gap{
+                overflow: hidden;
+                border-radius: 3px;
+                padding: 0;
+                background: rgba(0, 0, 0, 0.2);
+                height: 200px;
+                >div{
+                    margin: 10px 0;
+                }
+            }
+            .volume-bar{
+                height: 150px;
+            }
+            .sound{
+                align-self:flex-end;
+            }
         }
     }
 }
