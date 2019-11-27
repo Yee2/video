@@ -17,6 +17,12 @@ interface State {
     pictureLeft?: string
     pictureTime?: string
     showController: boolean
+    items: { title: string, hook: () => void }[],
+    context: {
+        show: boolean
+        x?: number
+        y?: number
+    }// 右键菜单
 }
 
 export default class Video extends Component<Props, State> {
@@ -27,6 +33,21 @@ export default class Video extends Component<Props, State> {
     constructor(props: Readonly<Props>) {
         super(props);
         this.state = {
+            items: [
+                {
+                    title: "Test 1!", hook: () => {
+                    }
+                },
+                {
+                    title: "Test 2!", hook: () => {
+                    }
+                },
+                {
+                    title: "Test 3!", hook: () => {
+                    }
+                },
+            ],
+            context: {show: false},
             showController: true,
             screenshot: false,
             full: false,
@@ -156,6 +177,15 @@ export default class Video extends Component<Props, State> {
         }
     }
 
+    RightClick(e: React.MouseEvent<HTMLDivElement, MouseEvent>) {
+        if (this.state.context.show) return;
+        e.preventDefault();
+        let div = e.currentTarget;
+        let x = e.clientX - div.getBoundingClientRect().left;
+        let y = e.clientY - div.getBoundingClientRect().top;
+        this.setState({context: {show: true, x, y}})
+    }
+
     render() {
         // <!-- 创建一个播放器 -->
         let p = (this.state.current / this.state.duration) * 100;
@@ -170,6 +200,7 @@ export default class Video extends Component<Props, State> {
         return (<div ref={div => this.div = div} className="yee-player"
                      onMouseEnter={e => this.enter(e)}
                      onMouseLeave={e => this.leave(e)}
+                     onContextMenu={e => this.RightClick(e)}
             >
                 {this.videoBox}
                 <div className={this.state.showController ? "controller-mask" : "controller-mask hidden"}>
@@ -201,8 +232,26 @@ export default class Video extends Component<Props, State> {
                         </div>
                     </div>
                 </div>
+                {this.Menu}
             </div>
         )
+    }
+
+    get Menu() {
+        let ctx = this.state.context;
+        if (!ctx.show) return null;
+        return (
+            <div className="menu-mask" onClick={e => {
+                this.setState({context: {show: false}})
+            }}>
+                <div className="ctx" style={{left: this.state.context.x, top: this.state.context.y}}
+                >
+                    <ul className="menu-list">
+                        {this.state.items.map(item => <li onClick={item.hook}>{item.title}</li>)}
+                    </ul>
+                </div>
+            </div>
+        );
     }
 
     t(time: number): string {
